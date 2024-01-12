@@ -69,7 +69,6 @@ class FIFOInventoryView(APIView):
 
             serializer.save()
 
-            # Calculate FIFO Inventory after the transaction
             remaining_inventory = calculate_fifo_inventory(company)
 
             return Response({
@@ -79,13 +78,7 @@ class FIFOInventoryView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class FIFOAveragePriceView(APIView):
-#     def get(self, request, company, quantity, format=None):
-#         try:
-#             fifo_average_price = calculate_fifo_average_price(company, quantity)
-#             return Response({"fifo_average_price": fifo_average_price}, status=200)
-#         except ValueError as e:
-#             return Response({"error": str(e)}, status=400)
+
         
 class FIFOAveragePriceView(APIView):
     def get(self, request, company, format=None):
@@ -96,61 +89,30 @@ class FIFOAveragePriceView(APIView):
             "fifo_inventory": total_quantity
         }, status=status.HTTP_200_OK)
     
-# class StockSplitView(APIView):
-#     def get(self, request, company, split_ratio,format=None):
-#         split_ratio = StockTransaction.objects.get(company=company).split_ratio
-
-#         if not split_ratio:
-#             return Response({"error": "Split ratio is required in the request data."}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             # Parse and validate the split ratio
-#             split_ratio = [int(part) for part in split_ratio.split(':')]
-#             if len(split_ratio) != 2 or split_ratio[1] <= 0:
-#                 raise ValueError("Invalid split ratio.")
-#         except ValueError as e:
-#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Perform the stock split
-#         self.perform_stock_split(company, split_ratio)
-
-#         return Response({"message": f"Stock split for {company} completed successfully."}, status=status.HTTP_201_CREATED)
-
-#     def perform_stock_split(self, company, split_ratio):
-#         transactions = StockTransaction.objects.filter(company=company)
-
-#         for transaction in transactions:
-#             new_quantity = transaction.quantity * split_ratio[1] // split_ratio[0]
-#             transaction.quantity = new_quantity
-#             transaction.split_ratio = f"{split_ratio[0]}:{split_ratio[1]}"  # Store the split ratio
-#             transaction.save()
 
 class StockSplitView(APIView):
     def get(self, request, company, split_ratio, format=None):
-        # split_ratio = StockTransaction.objects.get(company=company).split_ratio
-        # Check if the split_ratio is provided in the request data
+        
         if not split_ratio:
             return Response({"error": "Split ratio is required in the request data."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Parse and validate the split ratio
+            
             split_ratio = [int(part) for part in split_ratio.split(':')]
             if len(split_ratio) != 2 or split_ratio[1] <= 0:
                 raise ValueError("Invalid split ratio.")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Perform the stock split
         self.perform_stock_split(company, split_ratio)
 
         return Response({"message": f"Stock split for {company} completed successfully."}, status=status.HTTP_201_CREATED)
 
     def perform_stock_split(self, company, split_ratio):
         try:
-            # Get the latest StockTransaction for the specified company
+            
             transaction = StockTransaction.objects.filter(company=company).latest('date')
 
-            # Perform the stock split
             new_quantity = transaction.quantity * split_ratio[1] // split_ratio[0]
             transaction.quantity = new_quantity
             transaction.split_ratio = f"{split_ratio[0]}:{split_ratio[1]}"  # Store the split ratio
